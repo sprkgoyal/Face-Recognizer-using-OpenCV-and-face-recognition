@@ -33,7 +33,7 @@ for root, dir, files in os.walk(image_path):
 	for file in files:
 		img_path = os.path.join(root, file)
 		img = face_recognition.load_image_file(img_path)
-		# img = cv2.resize(img, (0, 0), None, 0.25, 0.25)		# Compressing the image for faster computation
+		img = cv2.resize(img, (0, 0), None, 0.25, 0.25)		# Compressing the image for faster computation
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)			# As face-detector works on RGB images
 		faceEncods = face_recognition.face_encodings(img)	# Finding the encodings of all the faces captured in the image
 		
