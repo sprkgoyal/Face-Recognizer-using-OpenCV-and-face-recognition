@@ -13,16 +13,22 @@ encodings = []
 names = []
 
 # Load the Lists with respactive data
-with open('encodings.json', 'r') as f:
-	readfile = json.load(f)
-	for k, v in readfile.items():
-		for en in v:
-			names.append(k)
-			encodings.append(en)
+try:
+	with open('encodings.json', 'r') as f:
+		readfile = json.load(f)
+		for k, v in readfile.items():
+			for en in v:
+				names.append(k)
+				encodings.append(en)
+except FileNotFoundError as err:
+	print("Model is not trained! Train using 'create_encodings.py'")
+	exit()
 
 # Load the Attendance List
 with open('Attendance.csv', 'r') as f:
 	AttendanceData = f.readlines()
+	if len(AttendanceData) == 0:
+		f.write("Name,Date,Time\n")
 	alreadyPresent = set()
 	for line in AttendanceData:
 		entries = line.split(',')
@@ -40,6 +46,10 @@ def MarkAttendance(name=None):
 
 # Create a camera 
 cam = cv2.VideoCapture(0)
+
+faces = []
+faceEncods = []
+thisFrame = True
 
 # either use default webcam OR
 # I have used IP Webcam, you can search more about this on Google
@@ -59,10 +69,14 @@ while True:
 	ret, frame = cam.read()
 	
 	frame = cv2.flip(frame, 1)								# Fliping the frame sideways to nullify mirror mode
-	img = cv2.resize(frame, (0, 0), None, 0.25, 0.25)		# Decreaasing the size of image to decrease computation time
-	img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)				# As face-detector works on RGB images
-	faces = face_recognition.face_locations(img)				# Finding location of all faces in the frame
-	faceEncods = face_recognition.face_encodings(img, faces)	# Finding the encoding of all the faces captured
+	
+	if thisFrame:
+		img = cv2.resize(frame, (0, 0), None, 0.25, 0.25)		# Decreaasing the size of image to decrease computation time
+		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)				# As face-detector works on RGB images
+		faces = face_recognition.face_locations(img)				# Finding location of all faces in the frame
+		faceEncods = face_recognition.face_encodings(img, faces)	# Finding the encoding of all the faces captured
+
+	thisFrame = not thisFrame
 
 	for faceEncod, face in zip(faceEncods, faces):
 		y1, x2, y2, x1 = face									# Coordinates of face found
