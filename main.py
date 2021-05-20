@@ -7,10 +7,15 @@ import numpy as np
 from cv2 import cv2
 import face_recognition
 from datetime import datetime
+from database import Database
 
 # Create Lists of Known Encodings with respective names
 encodings = []
-names = []
+scholars = []
+student_database = Database()
+
+all_students = student_database.get_returnable_data()
+stay_timer = [0] * len(all_students)
 
 # Load the Lists with respactive data
 try:
@@ -18,31 +23,20 @@ try:
 		readfile = json.load(f)
 		for k, v in readfile.items():
 			for en in v:
-				names.append(k)
+				scholars.append(int(k))
 				encodings.append(en)
 except FileNotFoundError as err:
 	print("Model is not trained! Train using 'create_encodings.py'")
 	exit()
 
-# Load the Attendance List
-with open('Attendance.csv', 'r') as f:
-	AttendanceData = f.readlines()
-	if len(AttendanceData) == 0:
-		f.write("Name,Date,Time\n")
-	alreadyPresent = set()
-	for line in AttendanceData:
-		entries = line.split(',')
-		alreadyPresent.add(entries[0])
-
 # Function to insert name, date and time when a new student apperas on Camera
-def MarkAttendance(name=None):
-	global alreadyPresent
-	if name not in alreadyPresent:
-		alreadyPresent.add(name)
-		curDate = datetime.now().date()
-		curTime = datetime.now().time()
-		with open('Attendance.csv', 'a') as f:
-			f.write(f'{name},{curDate},{curTime}\n')
+def MarkAttendance(scholar = 0):
+	global all_students
+	if all_students[scholar-1][4] != 'P':
+		stay_timer[scholar-1] += 1
+		if stay_timer[scholar-1] >= 10:
+			all_students[scholar-1][4] = 'P'
+			all_students[scholar-1][3] = datetime.now().strftime("%H:%M:%S")
 
 # Create a camera 
 cam = cv2.VideoCapture(0)
@@ -90,9 +84,10 @@ while True:
 		# if we found a face then we mark the attendance and put his/her name in the frame
 		if matches[ind]:
 			cv2.rectangle(frame, (x1-1, y2+25), (x2+1, y2), green_color, cv2.FILLED)
-			name = names[ind].replace('-', ' ').title()
+			scholar = scholars[ind]
+			name = all_students[scholar-1][1]
 			cv2.putText(frame, name, (x1, y2+18), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1.1, (255, 255, 255), 2)
-			MarkAttendance(name)
+			MarkAttendance(scholar)
 
 	# Showing the output in Camera Window
 	cv2.imshow('Camera', frame)
@@ -104,3 +99,5 @@ while True:
 # Release the camera and destroy all the windows after every thing is done
 cam.release()
 cv2.destroyAllWindows()
+
+student_database.upload(all_students)
