@@ -12,4 +12,4 @@ I have made this application for taking attendace in class.
 *Step 3.* Run *create_encodings.py* to train the model with the faces  <br />
 *Step 4.* Run *main.py* for the attendance  <br />
 
-*Record.py* is a to add new student in the database and also to get attendance reocrd.
+*Record.py* is to add new student in the database and also to get attendance reocrd.
